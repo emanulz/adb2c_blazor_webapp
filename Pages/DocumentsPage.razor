@@ -1,0 +1,99 @@
+@page "/documents"
+@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Threading.Tasks
+@using blazorADB2CWebApp.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
+@inject IHttpClientFactory ClientFactory
+
+<PageTitle>Document List</PageTitle>
+
+@if (documents == null)
+{
+  <p><em>Loading...</em></p>
+}
+else
+{
+  @if (user == null)
+  {
+    <h2>Document List</h2>
+  }
+  else
+  {
+    <h2>Document List </h2>
+    <h5>User: @user.Identity!.Name</h5>
+  }
+  <br />
+  <table class="table">
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Type</th>
+      <th>Document Date</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (var document in documents)
+      {
+        <tr>
+          <td>
+            @document.Id
+          </td>
+          <td>
+            @document.DocumentType
+          </td>
+          <td>
+            @document.DocumentDate
+          </td>
+          <td>
+            @document.Notes
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+}
+
+@code {
+  private DocumentItem[]? documents;
+
+  private System.Security.Claims.ClaimsPrincipal? user;
+
+  [Inject]
+  private AuthenticationStateProvider? LocalAuthenticationStateProvider { get; set; }
+
+  protected override async Task OnInitializedAsync()
+  {
+    var client = ClientFactory.CreateClient("documentsAPI");
+    try
+    {
+      documents = await client.GetFromJsonAsync<DocumentItem[]>(
+      "DocumentItems");
+    }
+    catch (AccessTokenNotAvailableException exception)
+    {
+      exception.Redirect();
+    }
+    catch (Exception exception)
+    {
+      Console.WriteLine("EXEPTION");
+      Console.WriteLine(exception);
+    }
+
+    await GetUserFromAuth();
+  }
+
+  private async Task GetUserFromAuth()
+  {
+    // Gets an AuthenticationState that describes the current user.
+    var authState = await LocalAuthenticationStateProvider!.GetAuthenticationStateAsync();
+
+    user = authState.User;
+
+  }
+}

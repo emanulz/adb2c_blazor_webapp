@@ -1,0 +1,104 @@
+@page "/createdocument"
+@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Threading.Tasks
+@using blazorADB2CWebApp.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
+@inject IHttpClientFactory ClientFactory
+
+<PageTitle>Create Document</PageTitle>
+
+@if (user == null)
+{
+  <h2>Create New Document</h2>
+}
+else
+{
+  <h2>Create New Document</h2>
+  <h5>User: @user.Identity!.Name</h5>
+}
+<pre>
+  <code>
+    DocumentItem {
+      DocumentDate: @DateTime.Now,
+      DocumentType: "NEGATIVE_TEST",
+      Notes: "Document Created From Blazor",
+    }
+  </code>
+</pre>
+
+<button class="login-button reg" @onclick="CreateDocument">
+  Create
+</button>
+
+@if (response != null)
+{
+  <pre>
+  <code>
+    @response
+  </code>
+</pre>
+
+}
+
+
+@code {
+  private DocumentItem documentElement = new DocumentItem
+  {
+    DocumentDate = DateTime.Now,
+    DocumentType = "NEGATIVE_TEST",
+    Notes = "Document Created From Blazor",
+  };
+
+  private DocumentItem? createdDocument;
+  private HttpResponseMessage? response;
+
+  private System.Security.Claims.ClaimsPrincipal? user;
+
+  [Inject]
+  private AuthenticationStateProvider? LocalAuthenticationStateProvider { get; set; }
+
+  protected override async Task OnInitializedAsync()
+  {
+    await GetUserFromAuth();
+
+  }
+
+
+  private async Task CreateDocument()
+  {
+    // Gets an AuthenticationState that describes the current user.
+    var client = ClientFactory.CreateClient("documentsAPI");
+    try
+    {
+      response = await client.PostAsJsonAsync("DocumentItems", documentElement);
+
+      if (response.IsSuccessStatusCode)
+      {
+        Console.WriteLine(response);
+      }
+
+    }
+    catch (AccessTokenNotAvailableException exception)
+    {
+      exception.Redirect();
+    }
+    catch (Exception exception)
+    {
+      Console.WriteLine("EXEPTION");
+      Console.WriteLine(exception);
+    }
+
+  }
+  private async Task GetUserFromAuth()
+  {
+    // Gets an AuthenticationState that describes the current user.
+    var authState = await LocalAuthenticationStateProvider!.GetAuthenticationStateAsync();
+
+    user = authState.User;
+
+  }
+}
