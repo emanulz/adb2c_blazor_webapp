@@ -31,6 +31,7 @@ builder.Services.AddMsalAuthentication(options =>
 {
     builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
     options.ProviderOptions.LoginMode = "redirect";
+
     var add = options.ProviderOptions.DefaultAccessTokenScopes.Add;
 
     add("openid");
